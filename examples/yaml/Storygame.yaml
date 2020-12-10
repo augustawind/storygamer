@@ -1,0 +1,19 @@
+title: "The Quest"
+base_dir: "./examples/yaml"
+entrypoint: "01-beginnings.yaml"
+
+pages:
+    - "01-beginnings"
+    - "02a-flashback"
+    - "02b-wander"
+    - "03-end"
+
+variables:
+    momentum: 0
+    name: Jet
+    is_drunk: false
+
+logger:
+    level: "trace"
+    base_file_name: "storygame"
+    file_ext: null

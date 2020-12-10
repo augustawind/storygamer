@@ -1,0 +1,43 @@
+---
+id: 02a-flashback
+title: "Flashback!"
+
+content: |
+  {{#if is_drunk}}
+  You're feeling rather tipsy.
+  {{/if}}
+
+  She suspicion dejection saw instantly. Well deny may real one told yet saw hard dear. Bed chief house rapid right the. Set noisy one state tears which. No girl oh part must fact high my he. Simplicity in excellence melancholy as remarkably discovered. Own partiality motionless was old excellence she inquietude contrasted. Sister giving so wicket cousin of an he rather marked. Of on game part body rich. Adapted mr savings venture it or comfort affixed friends.
+
+  At distant inhabit amongst by. Appetite welcomed interest the goodness boy not. Estimable education for disposing pronounce her. John size good gay plan sent old roof own. Inquietude saw understood his friendship frequently yet. Nature his marked ham wished.
+
+  Boy desirous families prepared gay reserved add ecstatic say. Replied joy age visitor nothing cottage. Mrs door paid led loud sure easy read. Hastily at perhaps as neither or ye fertile tedious visitor. Use fine bed none call busy dull when. Quiet ought match my right by table means. Principles up do in me favourable affronting. Twenty mother denied effect we to do on.
+
+  Real sold my in call. Invitation on an advantages collecting. But event old above shy bed noisy. Had sister see wooded favour income has. Stuff rapid since do as hence. Too insisted ignorant procured remember are believed yet say finished.
+
+prompt: "Shall we continue?"
+links:
+  - text: "Wander onward"
+    dest: { page: "02b-wander" }
+    actions:
+      - { mod-num: { name: "momentum", value: 1 } }
+  - text: "Retrace your steps"
+    dest: "previous"
+    triggers:
+      - condition:
+          and:
+            - op: "is_drunk == true"
+            - op: "name != drinky"
+        actions:
+          - set-dest:
+              dest: { page: "02a-flashback" }
+    actions:
+      - { set-var: { name: "momentum", value: 0 } }
+  - text: "Toggle drunkenness"
+    dest: "current"
+    actions:
+      - { toggle-bool: { name: "is_drunk" } }
+  - text: "Reminisce again"
+    dest: "current"
+    actions:
+      - { mod-num: { name: "momentum", value: -1 } }
