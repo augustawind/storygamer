@@ -34,14 +34,17 @@ pub struct Settings {
     logger: LoggingSettings,
 }
 
+const DEFAULT_SETTINGS_FILE_STEM: &str = "storygame";
+
 impl Settings {
     pub fn read<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         let path = path.as_ref().to_path_buf();
-        let content = fs::read_to_string(&path)
-            .map_err(|e| Error::read_error(Doctype::Settings, &path).join(e))?;
+        let content = Settings::read_to_string(&path)?;
 
         let (mut settings, path) = match serde_yaml::from_str::<Settings>(&content) {
             Ok(cfg) => (cfg, path),
+            // If given path fails parsing, look for another file in the same directory with
+            // the case insensitive file stem `storygame`.
             Err(err) => match path.parent() {
                 Some(parent) => {
                     let path = parent
@@ -50,27 +53,22 @@ impl Settings {
                         .and_then(|mut entries| {
                             entries.find_map(|entry| {
                                 let p = entry.ok()?.path();
-                                if p.is_file() && p.file_stem()?.to_str()? == "Storygame" {
+                                if p.is_file()
+                                    && p.file_stem()?.to_str()?.to_ascii_lowercase()
+                                        == DEFAULT_SETTINGS_FILE_STEM
+                                {
                                     return Some(p);
                                 }
                                 None
                             })
                         })
-                        .ok_or_else(|| {
-                            Error::errors(vec![
-                                Error::read_error(Doctype::Settings, shorten_path(path)),
-                                Error::expected("a valid settings file"),
-                                Error::message(
-                                    "note: if the settings file is named `Storygame` or \
-                                    `Storygame.*`, you can hit <Enter> anywhere in the directory \
-                                    in which it's located",
-                                ),
-                            ])
-                            .unwrap()
-                        })?;
-                    (serde_yaml::from_str(&fs::read_to_string(&path)?)?, path)
+                        .ok_or_else(|| Settings::err_no_read(path, err))?;
+                    let content = Settings::read_to_string(&path)?;
+                    let cfg = serde_yaml::from_str(&content)
+                        .map_err(|e| Settings::err_no_read(&path, e))?;
+                    (cfg, path)
                 }
-                None => return Err(Error::Deserialize(err)),
+                None => return Err(Settings::err_no_read(path, err)),
             },
         };
 
@@ -80,6 +78,23 @@ impl Settings {
         settings.source = Some(path);
 
         Ok(settings)
+    }
+
+    fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String, Error> {
+        fs::read_to_string(&path).map_err(|e| Error::read_error(Doctype::Settings, &path).join(e))
+    }
+
+    fn err_no_read<P: AsRef<Path>>(path: P, error: serde_yaml::Error) -> Error {
+        Error::errors(vec![
+            Error::read_error(Doctype::Settings, shorten_path(path)),
+            Error::Deserialize(error),
+            Error::expected("a valid settings file"),
+            Error::message(
+                "note: if the settings file is named 'Storygame' or 'Storygame.*' \
+                (case insensitive), you can hit <Enter> anywhere in the same directory",
+            ),
+        ])
+        .unwrap()
     }
 
     pub fn source(&self) -> Option<&Path> {
