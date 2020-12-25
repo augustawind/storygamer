@@ -4,24 +4,26 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use cursive::{theme, Printer, Vec2, View};
-use log4rs::append::console::{ConsoleAppender, Target};
-use log4rs::append::rolling_file::{
-    policy::compound::{
-        roll::fixed_window::FixedWindowRoller, trigger::size::SizeTrigger, CompoundPolicy,
+use log4rs::append::{
+    console::{ConsoleAppender, Target},
+    rolling_file::{
+        policy::compound::{
+            roll::fixed_window::FixedWindowRoller, trigger::size::SizeTrigger, CompoundPolicy,
+        },
+        RollingFileAppender,
     },
-    RollingFileAppender,
 };
 use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
-use log4rs::filter::{self, threshold::ThresholdFilter, Filter};
+use log4rs::filter::{self, threshold::ThresholdFilter};
 use same_file::is_same_file;
 
 use crate::errors::{Error, Result};
 
-const MEM_LOGS_CAPACITY: usize = 100;
 const LOG_MAX_FILE_SIZE: u64 = 100_000;
 const LOG_MAX_ARCHIVED_FILES: u32 = 2;
 
+const MEM_LOGS_CAPACITY: usize = 100;
 lazy_static! {
     pub static ref LOGS: Mutex<VecDeque<Record>> =
         Mutex::new(VecDeque::with_capacity(MEM_LOGS_CAPACITY));
@@ -42,7 +44,7 @@ impl ModuleFilter {
     }
 }
 
-impl Filter for ModuleFilter {
+impl filter::Filter for ModuleFilter {
     fn filter(&self, record: &log::Record) -> filter::Response {
         if record.level() > self.level {
             if let Some(module_path) = record.module_path() {
@@ -177,13 +179,16 @@ pub struct Logger {
 }
 
 impl Logger {
-    pub fn default() -> Result<Self> {
-        let config = LogConfig::default();
+    pub fn new(config: LogConfig) -> Result<Self> {
         let handle = log4rs::init_config(config.build()?)?;
         Ok(Logger {
             dest: config.dest(),
             handle,
         })
+    }
+
+    pub fn default() -> Result<Self> {
+        Logger::new(LogConfig::default())
     }
 
     pub fn set_config(&mut self, cfg: LogConfig) -> Result<()> {
