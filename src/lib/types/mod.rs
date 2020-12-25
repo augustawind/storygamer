@@ -9,8 +9,8 @@ use either::{Either, Either::*};
 use serde::de::{Deserializer, Visitor};
 use serde::Deserialize;
 
-pub use condition::*;
-pub use variable::*;
+pub use self::condition::*;
+pub use self::variable::*;
 
 pub type PageID = String;
 

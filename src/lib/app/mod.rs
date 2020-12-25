@@ -2,10 +2,11 @@ pub mod core;
 pub mod logger;
 pub mod ui;
 
+use crate::errors::Result;
+
 pub use self::core::Game;
 use self::logger::Logger;
-use crate::errors::Result;
-pub use ui::run;
+pub use self::ui::run;
 
 // Container that holds all of the dynamic application state.
 pub struct AppState {

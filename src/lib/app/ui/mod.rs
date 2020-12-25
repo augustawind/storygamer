@@ -91,7 +91,7 @@ pub fn run() {
             MenuTree::new()
                 .leaf("Open...", menu::open)
                 .leaf("Close", menu::close)
-                .leaf("Save Progress", |_| {})
+                .leaf("Save Progress", |_| {}) // TODO
                 .delimiter()
                 .leaf(constants::labels::QUIT, on_quit),
         )
@@ -109,10 +109,6 @@ pub fn run() {
 
     siv.add_layer(DummyView);
     redraw_content(&mut siv);
-
-    for _ in 0..5 {
-        siv.step();
-    }
 
     siv.run();
 }
@@ -233,9 +229,11 @@ fn redraw_content(siv: &mut Cursive) {
         siv.add_layer(dialog);
     // Otherwise, display the main layout.
     } else {
-        let layout = LinearLayout::horizontal()
-            .child(content_view(siv))
-            .child(debug_panel(siv));
+        let mut layout = LinearLayout::horizontal().child(content_view(siv));
+        #[cfg(debug_assertions)]
+        {
+            layout.add_child(debug_panel(siv));
+        }
         siv.add_fullscreen_layer(layout);
     }
 }
@@ -247,7 +245,6 @@ fn pop_prompt_dialog(siv: &mut Cursive) -> Option<impl View> {
             // Prompt has a `variable`, so create an input dialog.
             Some(var_name) => {
                 let var_name_clone = var_name.clone();
-
                 Dialog::around(
                     LinearLayout::vertical()
                         .child(PaddedView::new(
