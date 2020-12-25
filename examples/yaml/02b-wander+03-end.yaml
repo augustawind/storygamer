@@ -73,4 +73,4 @@ content: |
 
 links:
   - text: "Finish story"
-    dest: { end: "See you space cowboy..." }
+    dest: { end: "See you space cowboy {{momentum}}..." }

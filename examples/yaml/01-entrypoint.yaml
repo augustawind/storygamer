@@ -26,7 +26,7 @@ content: |
 
 prompt: "What will you do next?"
 links:
-  - text: "Reminisce"
+  - text: "Reminisce {{name}}"
     dest: { page: 02a-flashback }
     actions:
       - mod-num:

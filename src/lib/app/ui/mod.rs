@@ -129,15 +129,8 @@ fn redraw_content(siv: &mut Cursive) {
             .with_user_data(|app: &mut AppState| {
                 app.game.as_ref().map(|game| {
                     let page = game.current_page.borrow();
-                    let reg = Handlebars::new();
-                    let content = match reg.render_template(&page.content, &game.variables) {
-                        Ok(content) => content,
-                        Err(err) => {
-                            error!("error rendering template: {}", err);
-                            page.content.clone()
-                        }
-                    };
-                    (page.title.clone(), markdown::parse(content))
+                    let content = interpolate(&page.content, &game);
+                    (page.title.clone(), content)
                 })
             })
             .flatten()
@@ -239,42 +232,49 @@ fn redraw_content(siv: &mut Cursive) {
 }
 
 fn pop_prompt_dialog(siv: &mut Cursive) -> Option<impl View> {
-    siv.with_user_data(|app: &mut AppState| app.game.as_mut().unwrap().pop_prompt())
-        .unwrap()
-        .map(|Prompt { text, variable }| match variable {
-            // Prompt has a `variable`, so create an input dialog.
-            Some(var_name) => {
-                let var_name_clone = var_name.clone();
-                Dialog::around(
-                    LinearLayout::vertical()
-                        .child(PaddedView::new(
-                            Margins::lrtb(1, 1, 1, 1),
-                            TextView::new(text),
-                        ))
-                        .child(Panel::new(
-                            EditView::new()
-                                .on_submit(move |s: &mut Cursive, input: &str| {
-                                    on_prompt_submit(s, input, &var_name);
-                                })
-                                .with_name("prompt-input"),
-                        )),
-                )
-                .button("Ok", move |s: &mut Cursive| {
-                    let input = s
-                        .call_on_name("prompt-input", |view: &mut EditView| view.get_content())
-                        .unwrap();
-                    on_prompt_submit(s, input.as_ref(), &var_name_clone);
-                })
-                .title("PROMPT")
+    siv.with_user_data(|app: &mut AppState| {
+        let game = app.game.as_mut().unwrap();
+
+        game.pop_prompt().map(|Prompt { text, variable }| {
+            let content = interpolate(&text, &game);
+
+            match variable {
+                // Prompt has a `variable`, so create an input dialog.
+                Some(var_name) => {
+                    let var_name_clone = var_name.clone();
+                    Dialog::around(
+                        LinearLayout::vertical()
+                            .child(PaddedView::new(
+                                Margins::lrtb(1, 1, 1, 1),
+                                TextView::new(content),
+                            ))
+                            .child(Panel::new(
+                                EditView::new()
+                                    .on_submit(move |s: &mut Cursive, input: &str| {
+                                        on_prompt_submit(s, input, &var_name);
+                                    })
+                                    .with_name("prompt-input"),
+                            )),
+                    )
+                    .button("Ok", move |s: &mut Cursive| {
+                        let input = s
+                            .call_on_name("prompt-input", |view: &mut EditView| view.get_content())
+                            .unwrap();
+                        on_prompt_submit(s, input.as_ref(), &var_name_clone);
+                    })
+                    .title("PROMPT")
+                }
+                // Prompt has no `variable`, so create a simple info dialog.
+                None => Dialog::text(content)
+                    .button("Ok", |s: &mut Cursive| {
+                        s.pop_layer();
+                        redraw_content(s);
+                    })
+                    .title("INFO"),
             }
-            // Prompt has no `variable`, so create a simple info dialog.
-            None => Dialog::text(text)
-                .button("Ok", |s: &mut Cursive| {
-                    s.pop_layer();
-                    redraw_content(s);
-                })
-                .title("INFO"),
         })
+    })
+    .unwrap()
 }
 
 fn on_prompt_submit(siv: &mut Cursive, input: &str, var_name: &String) {
@@ -334,6 +334,18 @@ where
     }
 }
 
+fn interpolate(content: &str, game: &Game) -> StyledString {
+    let reg = Handlebars::new();
+    let content = match reg.render_template(content, &game.variables) {
+        Ok(content) => content,
+        Err(err) => {
+            error!("error rendering template: {}", err);
+            content.to_owned()
+        }
+    };
+    markdown::parse(content)
+}
+
 /*
  * Event handling.
  */
@@ -355,7 +367,11 @@ fn on_continue(siv: &mut Cursive) {
         s.pop_layer();
 
         let game_over = s
-            .with_user_data(|app: &mut AppState| app.game.as_mut().unwrap().follow_link(*link_idx))
+            .with_user_data(|app: &mut AppState| {
+                let game = app.game.as_mut().unwrap();
+                game.follow_link(*link_idx)
+                    .map(|msg| interpolate(&msg, &game))
+            })
             .flatten();
 
         if let Some(msg) = game_over {
@@ -373,11 +389,15 @@ fn on_continue(siv: &mut Cursive) {
         }
     });
 
-    for (idx, link) in links.iter().enumerate() {
-        let mut sstr = StyledString::plain(String::from("> ") + link.text.as_str() + " ");
-        sstr.append_styled(format!(" ↪ ({}) ", link.dest), Effect::Italic);
-        select.add_item(sstr, idx);
-    }
+    siv.with_user_data(|app: &mut AppState| {
+        let game = app.game.as_mut().unwrap();
+        for (idx, link) in links.iter().enumerate() {
+            let mut sstr = StyledString::from("> ");
+            sstr.append(interpolate(&link.text, &game));
+            sstr.append_styled(format!("  ↪ ({}) ", link.dest), Effect::Italic);
+            select.add_item(sstr, idx);
+        }
+    });
 
     siv.add_layer(
         OnEventView::new(

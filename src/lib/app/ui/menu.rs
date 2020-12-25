@@ -8,10 +8,11 @@ use cursive::traits::{Nameable, Resizable, Scrollable};
 use cursive::views::{Dialog, LinearLayout, OnEventView, Panel, SelectView, TextView};
 use cursive::Cursive;
 
-use super::{on_menu_back, redraw_content, AppState};
-use crate::app::{logger::LogConfig, Game};
+use crate::app::{logger::LogConfig, AppState, Game};
 use crate::parser::{self, Settings};
 use crate::utils::is_parent_path;
+
+use super::{on_menu_back, redraw_content};
 
 mod constants {
     pub mod container {
