@@ -358,7 +358,7 @@ fn on_continue(siv: &mut Cursive) {
         s.pop_layer();
 
         let game_over = s
-            .with_user_data(|app: &mut AppState| app.game.as_mut().unwrap().next(*link_idx))
+            .with_user_data(|app: &mut AppState| app.game.as_mut().unwrap().follow_link(*link_idx))
             .flatten();
 
         if let Some(msg) = game_over {

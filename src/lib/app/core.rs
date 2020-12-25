@@ -29,12 +29,8 @@ impl Game {
         }
     }
 
-    pub fn pop_prompt(&mut self) -> Option<Prompt> {
-        self.prompt_queue.pop_front()
-    }
-
     /// Advance the Game by selecting the Link with the given `link_idx`.
-    pub fn next(&mut self, link_idx: usize) -> Option<String> {
+    pub fn follow_link(&mut self, link_idx: usize) -> Option<String> {
         trace!("next(idx={})", link_idx);
 
         let (mut link_dest, actions, triggers) = {
@@ -185,6 +181,10 @@ impl Game {
                 _ => unreachable!(),
             },
         }
+    }
+
+    pub fn pop_prompt(&mut self) -> Option<Prompt> {
+        self.prompt_queue.pop_front()
     }
 }
 
