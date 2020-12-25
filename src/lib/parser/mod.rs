@@ -59,7 +59,7 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
             match action {
                 // Check that variables are declared in settings and that values have correct types.
                 LinkAction::SetVar { name, value } => match variables.get(name) {
-                    Some(var) if var.is_same_type(value) => {}
+                    Some(var) if var.type_eq(value) => {}
                     Some(var) => {
                         return Err(Error::bad_value_type(value, var.type_()));
                     }

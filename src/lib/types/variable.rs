@@ -40,7 +40,7 @@ impl Variable {
         }
     }
 
-    pub fn is_same_type(&self, other: &Variable) -> bool {
+    pub fn type_eq(&self, other: &Variable) -> bool {
         self.type_() == other.type_()
     }
 }
