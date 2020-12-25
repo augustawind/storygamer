@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use log::LevelFilter;
 use serde::Deserialize;
 
-use crate::errors::{Doctype, Error};
+use crate::errors::{Doctype, Error, Result};
 use crate::parser::PageID;
 use crate::types::Variable;
 use crate::utils::shorten_path;
@@ -37,7 +37,7 @@ pub struct Settings {
 const DEFAULT_SETTINGS_FILE_STEM: &str = "storygame";
 
 impl Settings {
-    pub fn read<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
+    pub fn read<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref().to_path_buf();
         let content = Settings::read_to_string(&path)?;
 
@@ -80,7 +80,7 @@ impl Settings {
         Ok(settings)
     }
 
-    fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String, Error> {
+    fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
         fs::read_to_string(&path).map_err(|e| Error::read_error(Doctype::Settings, &path).join(e))
     }
 

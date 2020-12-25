@@ -39,10 +39,13 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
         if !page_ids.contains(page_id) {
             return Err(Error::undeclared_page_id(page_id));
         }
-
         let page = pages
             .get_mut(page_id)
             .ok_or_else(|| Error::undeclared_page_id(page_id))?;
+
+        /*
+         * Define `clean_*` functions.
+         */
 
         let clean_link_dest = |dest: &mut LinkDest| -> Result<()> {
             if let LinkDest::Page(ref mut to_page) = dest {
@@ -104,10 +107,9 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
             variables: &HashMap<String, Variable>,
         ) -> Result<()> {
             let var_name = &operation.name;
-            let var = match variables.get(var_name) {
-                Some(var) => var,
-                None => return Err(Error::undeclared_variable(var_name)),
-            };
+            let var = variables
+                .get(var_name)
+                .ok_or_else(|| Error::undeclared_variable(var_name))?;
 
             use ComparisonOp::*;
             match operation.op {
@@ -145,6 +147,10 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
             Ok(())
         }
 
+        /*
+         * Loop through pages and run `clean_*` functions on them.
+         */
+
         for link in &mut page.borrow_mut().links.iter_mut() {
             clean_link_dest(&mut link.dest)?;
 
@@ -160,6 +166,7 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
         }
     }
 
+    // Return entrypoint page.
     Ok(pages
         .remove(
             &settings
