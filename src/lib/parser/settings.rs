@@ -28,8 +28,7 @@ pub struct Settings {
     title: String,
     base_dir: PathBuf,
     entrypoint: PathBuf,
-    #[serde(rename = "pages")]
-    page_ids: HashSet<PageID>,
+    pages: HashSet<PageID>,
     #[serde(default)]
     variables: HashMap<String, Variable>,
     logger: LoggingSettings,
@@ -84,7 +83,7 @@ impl Settings {
     }
 
     pub fn source(&self) -> Option<&Path> {
-        self.source.as_ref().map(|p| p.as_path())
+        self.source.as_ref().map(PathBuf::as_path)
     }
     pub fn title(&self) -> &str {
         self.title.as_str()
@@ -95,8 +94,8 @@ impl Settings {
     pub fn entrypoint(&self) -> &Path {
         self.entrypoint.as_path()
     }
-    pub fn page_ids(&self) -> &HashSet<PageID> {
-        &self.page_ids
+    pub fn pages(&self) -> &HashSet<PageID> {
+        &self.pages
     }
     pub fn variables(&self) -> &HashMap<String, Variable> {
         &self.variables

@@ -247,7 +247,7 @@ impl Error {
         )?))
     }
 
-    /// Join this Error and another into an [`Error::Errors`].
+    /// Joins this Error and another into an [`Error::Errors`].
     pub fn join<E: Into<Error>>(self, other: E) -> Error {
         Error::errors(vec![self, other.into()]).unwrap()
     }
@@ -333,7 +333,7 @@ impl Error {
                     error.to_string(),
                 ]
             }
-            Error::Deserialize(e) => vec!["could not parse TOML".to_string(), e.to_string()],
+            Error::Deserialize(e) => vec!["could not parse YAML".to_string(), e.to_string()],
             Error::Internal { error } => vec!["internal error".to_string(), error.to_string()],
             Error::IO(e) => vec!["I/O failure".to_string(), e.to_string()],
             Error::Std(e) => vec![e.to_string()],

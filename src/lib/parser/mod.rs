@@ -21,11 +21,17 @@ lazy_static! {
         Regex::new(r#"(?xm) (\A | (^ \.{3} .* $)?) (^ -{3} \s* $) | \A"#).unwrap();
 }
 
+/// Reads and parses a storygame using the given [`Settings`].
+///
+/// 1. Reads files from [`Settings.base_dir`].
+/// 2. Parses file contents into [`Page`] objects.
+/// 3. Validates and finalizes parsed data.
+/// 4. Returns the [`Page`] which is designated as the entrypoint.
 pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
     let mut pages = read_pages(settings)?;
     let pages_clone = pages.clone();
 
-    let page_ids = settings.page_ids();
+    let page_ids = settings.pages();
     let variables = settings.variables();
 
     for page_id in pages_clone.keys() {
