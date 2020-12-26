@@ -17,7 +17,7 @@ impl fmt::Display for Variable {
         let s = match self {
             Variable::Num(value) => value.to_string(),
             Variable::Bool(value) => value.to_string(),
-            Variable::Str(value) => value.escape_default().to_string(),
+            Variable::Str(value) => format!("\"{}\"", value.escape_default()),
         };
         f.write_str(&s)
     }
