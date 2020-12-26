@@ -34,8 +34,7 @@ pub struct Settings {
     pages: HashSet<PageID>,
     #[serde(default)]
     variables: HashMap<String, Variable>,
-    #[serde(default)]
-    #[serde(deserialize_with = "deserialize_item_defs")]
+    #[serde(default, deserialize_with = "deserialize_item_defs")]
     items: HashMap<String, ItemDef>,
     logger: LoggingSettings,
 }

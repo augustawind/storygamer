@@ -5,7 +5,6 @@ use serde::de::{self, IntoDeserializer};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
-#[serde(deny_unknown_fields)]
 #[serde(untagged)]
 pub enum Variable {
     Num(i32),

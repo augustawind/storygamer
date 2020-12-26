@@ -66,8 +66,7 @@ pub struct Link {
 #[derive(Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]
 pub enum LinkDest {
-    #[serde(rename = "page")]
-    #[serde(deserialize_with = "deserialize_link_dest_page")]
+    #[serde(rename = "page", deserialize_with = "deserialize_link_dest_page")]
     Page(Either<PageID, Rc<RefCell<Page>>>),
     #[serde(rename = "current")]
     CurrentPage,
