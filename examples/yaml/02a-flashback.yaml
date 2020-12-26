@@ -44,31 +44,26 @@ links:
       - set-var: ["momentum", 0]
 
   - text: "Toggle drunkenness"
-    dest: "current"
     actions:
       - toggle-bool: "is_drunk"
 
   - text: "Reminisce again"
-    dest: "current"
     actions:
       - mod-num: ["momentum", -1]
 
   - text: "Unleash the beast"
-    dest: "current"
     requires:
       has-item: "monster_energy"
     actions:
       - use-item: "monster_energy"
 
   - text: "Drop the can"
-    dest: "current"
     requires:
       has-item: "monster_energy"
     actions:
       - drop-item: "monster_energy"
 
   - text: "Pickup crystal ball"
-    dest: "current"
     requires:
       not: { has-item: "crystal_ball" }
     actions:

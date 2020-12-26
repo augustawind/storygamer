@@ -47,6 +47,5 @@ links:
           text: "Nice to meet you, {{name}}."
 
   - text: "Pick up mysterious can"
-    dest: "current"
     actions:
       - acquire-item: "monster_energy"

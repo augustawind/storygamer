@@ -53,6 +53,7 @@ impl Page {
 #[serde(deny_unknown_fields)]
 pub struct Link {
     pub text: String,
+    #[serde(default)]
     pub dest: LinkDest,
     #[serde(default)]
     pub requires: Option<Condition>,
@@ -97,6 +98,12 @@ where
     }
 
     deserializer.deserialize_string(LinkDestPageVisitor)
+}
+
+impl Default for LinkDest {
+    fn default() -> Self {
+        LinkDest::CurrentPage
+    }
 }
 
 impl fmt::Display for LinkDest {
