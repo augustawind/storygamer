@@ -21,6 +21,11 @@ links:
     dest: { page: "02b-wander" }
     actions:
       - { mod-num: { name: "momentum", value: 1 } }
+    triggers:
+      - condition:
+          has_item: "crystal_ball"
+        actions:
+          - set-dest: { page: "03-end" }
   - text: "Retrace your steps"
     dest: "previous"
     triggers:
@@ -29,15 +34,26 @@ links:
             - op: "is_drunk == true"
             - op: "name != drinky"
         actions:
-          - set-dest:
-              dest: { page: "02a-flashback" }
+          - set-dest: { page: "02a-flashback" }
     actions:
       - { set-var: { name: "momentum", value: 0 } }
   - text: "Toggle drunkenness"
     dest: "current"
     actions:
-      - { toggle-bool: { name: "is_drunk" } }
+      - toggle-bool: "is_drunk"
   - text: "Reminisce again"
     dest: "current"
     actions:
       - { mod-num: { name: "momentum", value: -1 } }
+  - text: "Unleash the beast"
+    dest: "current"
+    actions:
+      - use-item: "monster_energy"
+  - text: "Drop the can"
+    dest: "current"
+    actions:
+      - drop-item: "monster_energy"
+  - text: "Pickup crystal ball"
+    dest: "current"
+    actions:
+      - acquire-item: "crystal_ball"

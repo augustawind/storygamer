@@ -72,7 +72,7 @@ pub fn load_storygame<P: AsRef<Path>>(siv: &mut Cursive, path: P) {
     debug!("loading storygame: parsed settings");
 
     let starting_page = unwrap_or_notify!(siv, parser::parse(&settings));
-    let game = Game::new(&starting_page, settings.variables());
+    let game = Game::new(&starting_page, settings.variables(), settings.items());
     debug!("loading storygame: parsed game");
 
     // Update app state.

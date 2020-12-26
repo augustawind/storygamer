@@ -12,6 +12,18 @@ variables:
     momentum: 0
     name: Jet
     is_drunk: false
+    funk: 72
+    kobayashi: true
+    family_name: Humperdinck
+
+items:
+    crystal_ball:
+        description: "A glass orb that grants its users magical sight."
+        effect: { toggle-bool: "is_drunk" }
+    monster_energy:
+        description: "A potent energy potion. Unleashes the beast."
+        max_uses: 1
+        effect: { mod-num: { name: "momentum", value: 1 } }
 
 logger:
     level: "trace"

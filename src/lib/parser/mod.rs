@@ -12,8 +12,8 @@ use same_file::is_same_file;
 pub use self::settings::Settings;
 use crate::errors::{Doctype, Error, InternalError, Result};
 use crate::types::{
-    ComparisonOp, Condition, LinkAction, LinkDest, Operation, Page, PageID, Prompt, VarType,
-    Variable,
+    ComparisonOp, Condition, ItemDef, LinkAction, LinkDest, Operation, Page, PageID, Prompt,
+    VarType, Variable,
 };
 
 lazy_static! {
@@ -33,6 +33,7 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
 
     let page_ids = settings.pages();
     let variables = settings.variables();
+    let items = settings.items();
 
     for page_id in pages_clone.keys() {
         // Check that page IDs are declared in settings.
@@ -81,14 +82,14 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
                     }
                     None => return Err(Error::undeclared_variable(name)),
                 },
-                LinkAction::ToggleBool { name } => match variables.get(name) {
+                LinkAction::ToggleBool(name) => match variables.get(name) {
                     Some(Variable::Bool(_)) => {}
                     Some(var) => {
                         return Err(Error::bad_variable_type(name, var.type_(), VarType::Bool))
                     }
                     None => return Err(Error::undeclared_variable(name)),
                 },
-                &mut LinkAction::SetDest { ref mut dest } => {
+                &mut LinkAction::SetDest(ref mut dest) => {
                     clean_link_dest(dest)?;
                 }
                 LinkAction::Prompt(Prompt { variable, .. }) => {
@@ -96,6 +97,13 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
                         if !variables.contains_key(var_name.as_str()) {
                             return Err(Error::undeclared_variable(var_name));
                         }
+                    }
+                }
+                LinkAction::AcquireItem(name)
+                | LinkAction::DropItem(name)
+                | LinkAction::UseItem(name) => {
+                    if !items.contains_key(name) {
+                        return Err(Error::undeclared_item(name));
                     }
                 }
             }
@@ -133,15 +141,21 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
         fn clean_condition(
             cond: &mut Condition,
             variables: &HashMap<String, Variable>,
+            items: &HashMap<String, ItemDef>,
         ) -> Result<()> {
             match cond {
                 Condition::And(children) | Condition::Or(children) => {
                     for child in children.iter_mut() {
-                        clean_condition(child, variables)?;
+                        clean_condition(child, variables, items)?;
                     }
                 }
                 Condition::Op(operation) => {
                     clean_operation(operation, variables)?;
+                }
+                Condition::HasItem(name) => {
+                    if !items.contains_key(name) {
+                        return Err(Error::undeclared_item(name));
+                    }
                 }
             }
             Ok(())
@@ -155,7 +169,7 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
             clean_link_dest(&mut link.dest)?;
 
             for trigger in link.triggers.iter_mut() {
-                clean_condition(&mut trigger.condition, variables)?;
+                clean_condition(&mut trigger.condition, variables, items)?;
                 for action in trigger.actions.iter_mut() {
                     clean_action(action)?;
                 }

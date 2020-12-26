@@ -8,11 +8,12 @@ use serde::Deserialize;
 use super::variable::Variable;
 
 #[derive(Deserialize, Debug, Clone)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum Condition {
     And(Vec<Condition>),
     Or(Vec<Condition>),
     Op(Operation),
+    HasItem(String),
 }
 
 #[derive(Debug, Clone)]

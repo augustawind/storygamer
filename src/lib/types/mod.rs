@@ -1,4 +1,5 @@
 mod condition;
+pub mod item;
 mod variable;
 
 use std::cell::RefCell;
@@ -6,10 +7,11 @@ use std::fmt;
 use std::rc::{Rc, Weak};
 
 use either::{Either, Either::*};
-use serde::de::{Deserializer, Visitor};
+use serde::de;
 use serde::Deserialize;
 
 pub use self::condition::*;
+pub use self::item::{Item, ItemDef};
 pub use self::variable::*;
 
 pub type PageID = String;
@@ -77,18 +79,18 @@ fn deserialize_link_dest_page<'de, D>(
     deserializer: D,
 ) -> Result<Either<PageID, Rc<RefCell<Page>>>, D::Error>
 where
-    D: Deserializer<'de>,
+    D: de::Deserializer<'de>,
 {
     struct LinkDestPageVisitor;
 
-    impl<'de> Visitor<'de> for LinkDestPageVisitor {
+    impl<'de> de::Visitor<'de> for LinkDestPageVisitor {
         type Value = Either<PageID, Rc<RefCell<Page>>>;
 
         fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
             f.write_str("string containing a page ID")
         }
 
-        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E> {
+        fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
             Ok(Left(value.to_owned()))
         }
     }
@@ -138,11 +140,17 @@ pub enum LinkAction {
     #[serde(rename = "mod-num")]
     ModNum { name: String, value: i32 },
     #[serde(rename = "toggle-bool")]
-    ToggleBool { name: String },
+    ToggleBool(String),
     #[serde(rename = "set-dest")]
-    SetDest { dest: LinkDest },
+    SetDest(LinkDest),
     #[serde(rename = "prompt")]
     Prompt(Prompt),
+    #[serde(rename = "acquire-item")]
+    AcquireItem(String),
+    #[serde(rename = "drop-item")]
+    DropItem(String),
+    #[serde(rename = "use-item")]
+    UseItem(String),
 }
 
 #[derive(Deserialize, Debug, Clone)]

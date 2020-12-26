@@ -1,7 +1,7 @@
 use std::iter;
 use std::rc::Rc;
 
-use cursive::align::HAlign;
+use cursive::align::{Align, HAlign};
 use cursive::event::{Event, Key};
 use cursive::menu::MenuTree;
 use cursive::theme::{BaseColor, Color, Effect, Style};
@@ -17,6 +17,7 @@ use handlebars::Handlebars;
 
 use crate::app::{logger::LogView, AppState, Game};
 use crate::types::{Prompt, Variable};
+use crate::utils::ceil_div;
 
 macro_rules! unwrap_or_notify {
     ($siv:expr, $expr:expr) => {{
@@ -137,14 +138,15 @@ fn redraw_content(siv: &mut Cursive) {
             .unwrap_or_else(|| (None, StyledString::plain(*FILLER_TEXT)));
 
         OnEventView::new({
-            let dialog = Dialog::around(TextView::new(content).scrollable().with_name("content"))
-                .h_align(HAlign::Center)
-                .padding_lrtb(0, 0, 0, 1)
-                .button(constants::labels::NEXT, on_continue);
-            match title {
-                Some(title) => dialog.title(format!("\"{}\"", title)),
-                None => dialog,
+            let mut dialog =
+                Dialog::around(TextView::new(content).scrollable().with_name("content"))
+                    .h_align(HAlign::Center)
+                    .padding_lrtb(0, 0, 0, 1)
+                    .button(constants::labels::NEXT, on_continue);
+            if let Some(title) = title {
+                dialog = dialog.title(format!("\"{}\"", title));
             }
+            dialog.full_width()
         })
         .on_event(Event::CtrlChar('n'), on_continue)
         .on_event('k', mk_scroll("content", |_| -1))
@@ -170,23 +172,95 @@ fn redraw_content(siv: &mut Cursive) {
         })
     }
 
+    fn error_list_view() -> ListView {
+        ListView::new().child("ERROR", TextView::new("N/A"))
+    }
+
     // Debug panel - container for Variables view and Logs view.
     #[cfg(debug_assertions)]
     fn debug_panel(s: &mut Cursive) -> impl View {
         let vars_view = s
             .with_user_data(|app: &mut AppState| {
                 app.game.as_ref().map(|game: &Game| {
-                    let mut vars = game.variables.iter().collect::<Vec<_>>();
-                    vars.sort_by(|x, y| x.0.cmp(y.0));
+                    let mut vars: Vec<_> = game.variables.iter().collect();
+                    vars.sort_by(|(key0, _), (key1, _)| key0.cmp(key1));
 
-                    let mut view = ListView::new();
-                    for (name, value) in vars {
+                    let mut lcol = ListView::new();
+                    let mut rcol = ListView::new();
+
+                    let midpoint = ceil_div(vars.len(), 2);
+                    for (i, (name, value)) in vars.into_iter().enumerate() {
+                        let view = if i < midpoint { &mut lcol } else { &mut rcol };
                         view.add_child(
-                            &format!("> {}", name),
+                            name,
                             TextView::new({
-                                let mut s = StyledString::plain("::  ");
+                                let mut s = StyledString::plain(":: ");
                                 s.append(StyledString::styled(
                                     value.to_string(),
+                                    Style::from(Color::Dark(BaseColor::Blue)).combine(Effect::Bold),
+                                ));
+                                s
+                            }),
+                        );
+                    }
+
+                    let buffer_col = PaddedView::new(
+                        Margins::lr(1, 1),
+                        TextView::new(
+                            iter::repeat("│\n")
+                                .take(lcol.children().len())
+                                .collect::<Vec<&str>>()
+                                .concat(),
+                        )
+                        .align(Align::top_center()),
+                    );
+
+                    LinearLayout::horizontal()
+                        .child(lcol)
+                        .child(buffer_col)
+                        .child(rcol)
+                })
+            })
+            .flatten()
+            .unwrap_or_else(|| {
+                LinearLayout::horizontal()
+                    .child(error_list_view())
+                    .child(error_list_view())
+            });
+
+        let items_view = s
+            .with_user_data(|app: &mut AppState| {
+                app.game.as_ref().map(|game: &Game| {
+                    let mut item_names: Vec<&String> = game.item_defs.keys().collect();
+                    item_names.sort();
+
+                    let mut view = ListView::new();
+                    for name in item_names {
+                        view.add_child(
+                            &format!(" > {}", name),
+                            TextView::new({
+                                let (fmt_count, fmt_uses) = match game.items.get(name) {
+                                    Some(stack) => {
+                                        let fmt_count = format!("x{}", stack.len());
+                                        let top_item = stack.back().unwrap();
+                                        let fmt_uses = match top_item
+                                            .uses_left()
+                                            .zip(top_item.max_uses())
+                                        {
+                                            Some((num, denom)) => format!("({}/{})", num, denom),
+                                            None => format!("({}/∞)", top_item.used()),
+                                        };
+                                        (fmt_count, fmt_uses)
+                                    }
+                                    None => ("--".to_string(), "(-/-)".to_string()),
+                                };
+
+                                let mut s = StyledString::styled(
+                                    format!(" {}", fmt_count),
+                                    Style::from(Color::Dark(BaseColor::Blue)).combine(Effect::Bold),
+                                );
+                                s.append(StyledString::styled(
+                                    format!(" {}", fmt_uses),
                                     Style::from(Color::Dark(BaseColor::Blue)).combine(Effect::Bold),
                                 ));
                                 s
@@ -197,14 +271,22 @@ fn redraw_content(siv: &mut Cursive) {
                 })
             })
             .flatten()
-            .unwrap_or_else(|| ListView::new().child("ERROR", TextView::new("N/A")));
+            .unwrap_or_else(error_list_view);
 
         LinearLayout::vertical()
             .child(
-                // Variables view - lists the current values of each variable.
-                Panel::new(ScrollView::new(vars_view).scroll_x(true))
-                    .title("VARS")
+                // Items view - list the currently held items and their properties.
+                Panel::new(ScrollView::new(items_view).scroll_x(true))
+                    .title("ITEMS")
                     .title_position(HAlign::Right),
+            )
+            .child(
+                // Variables view - lists the current values of each variable.
+                Panel::new(
+                    ScrollView::new(PaddedView::new(Margins::lr(1, 1), vars_view)).scroll_x(true),
+                )
+                .title("VARS")
+                .title_position(HAlign::Right),
             )
             .child(
                 // Logs view - displays logging statements.

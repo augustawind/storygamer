@@ -20,8 +20,7 @@ links:
       - condition:
           op: ["momentum", "<", 2]
         actions:
-          - set-dest:
-              dest: { page: "01-beginnings" }
+          - set-dest: { page: "01-beginnings" }
 
 ---
 id: "03-end"

@@ -59,6 +59,8 @@ pub enum Error {
     UndeclaredPageID(PageID),
     /// Undeclared variable used in story file.
     UndeclaredVariable(String),
+    /// Undeclared item used in story file.
+    UndeclaredItem(String),
     /// Wrong value type used in story file.
     BadValueType {
         value: Variable,
@@ -75,14 +77,12 @@ pub enum Error {
         doctype: Doctype,
         path: PathBuf,
     },
-    /// Parsing failed.
+    /// Error parsing a file.
     ParseError {
         doctype: Doctype,
         path: PathBuf,
         error: serde_yaml::Error,
     },
-    /// Reading TOML failed.
-    Deserialize(serde_yaml::Error),
     /// Programmer error.
     Internal {
         error: InternalError,
@@ -106,7 +106,6 @@ impl StdError for Error {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
             Error::ParseError { error, .. } => Some(error),
-            Error::Deserialize(e) => Some(e),
             Error::Internal { error } => match error {
                 InternalError::CellBorrow(e) => Some(e),
                 InternalError::CellBorrowMut(e) => Some(e),
@@ -146,11 +145,6 @@ impl_From_for_Error_Internal! {
     From<log::SetLoggerError> |e| InternalError::Logger(Box::new(e));
 }
 
-impl From<serde_yaml::Error> for Error {
-    fn from(e: serde_yaml::Error) -> Self {
-        Error::Deserialize(e)
-    }
-}
 impl From<InternalError> for Error {
     fn from(error: InternalError) -> Self {
         Error::Internal { error }
@@ -187,6 +181,9 @@ impl Error {
     /// Constructor method for [`Error::UndeclaredVariable`].
     pub fn undeclared_variable<S: ToString>(s: S) -> Self {
         Error::UndeclaredVariable(s.to_string())
+    }
+    pub fn undeclared_item<S: ToString>(s: S) -> Self {
+        Error::UndeclaredItem(s.to_string())
     }
     pub fn bad_value_type(value: &Variable, expected: VarType) -> Self {
         Error::BadValueType {
@@ -297,6 +294,7 @@ impl Error {
                 format!("no page exists with ID '{}'", id),
             ],
             Error::UndeclaredVariable(name) => vec![format!("undeclared variable '{}'", name)],
+            Error::UndeclaredItem(name) => vec![format!("undeclared item '{}'", name)],
             Error::BadValueType { value, expected } => vec![
                 format!("bad type for value {:?}", value),
                 format!("expected a {}", expected),
@@ -333,7 +331,6 @@ impl Error {
                     error.to_string(),
                 ]
             }
-            Error::Deserialize(e) => vec!["could not parse YAML".to_string(), e.to_string()],
             Error::Internal { error } => vec!["internal error".to_string(), error.to_string()],
             Error::IO(e) => vec!["I/O failure".to_string(), e.to_string()],
             Error::Std(e) => vec![e.to_string()],

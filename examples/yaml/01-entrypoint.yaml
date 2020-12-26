@@ -26,7 +26,7 @@ content: |
 
 prompt: "What will you do next?"
 links:
-  - text: "Reminisce {{name}}"
+  - text: "Reminisce, {{name}}?"
     dest: { page: 02a-flashback }
     actions:
       - mod-num:
@@ -43,3 +43,7 @@ links:
           variable: name
       - prompt:
           text: "Nice to meet you, {{name}}."
+  - text: "Pick up mysterious can"
+    dest: "current"
+    actions:
+      - acquire-item: "monster_energy"
