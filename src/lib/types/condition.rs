@@ -12,6 +12,7 @@ use super::variable::Variable;
 pub enum Condition {
     And(Vec<Condition>),
     Or(Vec<Condition>),
+    Not(Box<Condition>),
     Op(Operation),
     HasItem(String),
 }

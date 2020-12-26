@@ -152,6 +152,9 @@ pub fn parse(settings: &Settings) -> Result<Rc<RefCell<Page>>> {
                 Condition::Op(operation) => {
                     clean_operation(operation, variables)?;
                 }
+                Condition::Not(condition) => {
+                    clean_condition(condition, variables, items)?;
+                }
                 Condition::HasItem(name) => {
                     if !items.contains_key(name) {
                         return Err(Error::undeclared_item(name));

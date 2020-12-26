@@ -23,7 +23,10 @@ links:
       - { mod-num: { name: "momentum", value: 1 } }
     triggers:
       - condition:
-          has_item: "crystal_ball"
+          and:
+            - has_item: "crystal_ball"
+            - not:
+                has_item: "monster_energy"
         actions:
           - set-dest: { page: "03-end" }
   - text: "Retrace your steps"

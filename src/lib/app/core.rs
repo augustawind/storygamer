@@ -203,6 +203,7 @@ impl Game {
         match cond {
             Condition::And(children) => children.iter().all(|child| self.eval_condition(child)),
             Condition::Or(children) => children.iter().any(|child| self.eval_condition(child)),
+            Condition::Not(condition) => !self.eval_condition(condition),
             Condition::Op(Operation { name, op, value }) => self.eval_operation(name, *op, value),
             Condition::HasItem(name) => self.items.contains_key(name),
         }
