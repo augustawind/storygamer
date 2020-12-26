@@ -16,6 +16,7 @@ content: |
   Real sold my in call. Invitation on an advantages collecting. But event old above shy bed noisy. Had sister see wooded favour income has. Stuff rapid since do as hence. Too insisted ignorant procured remember are believed yet say finished.
 
 prompt: "Shall we continue?"
+
 links:
   - text: "Wander onward"
     dest: { page: "02b-wander" }
@@ -24,11 +25,12 @@ links:
     triggers:
       - condition:
           and:
-            - has_item: "crystal_ball"
+            - has-item: "crystal_ball"
             - not:
-                has_item: "monster_energy"
+                has-item: "monster_energy"
         actions:
           - set-dest: { page: "03-end" }
+
   - text: "Retrace your steps"
     dest: "previous"
     triggers:
@@ -40,23 +42,34 @@ links:
           - set-dest: { page: "02a-flashback" }
     actions:
       - { set-var: { name: "momentum", value: 0 } }
+
   - text: "Toggle drunkenness"
     dest: "current"
     actions:
       - toggle-bool: "is_drunk"
+
   - text: "Reminisce again"
     dest: "current"
     actions:
       - { mod-num: { name: "momentum", value: -1 } }
+
   - text: "Unleash the beast"
     dest: "current"
+    requires:
+      has-item: "monster_energy"
     actions:
       - use-item: "monster_energy"
+
   - text: "Drop the can"
     dest: "current"
+    requires:
+      has-item: "monster_energy"
     actions:
       - drop-item: "monster_energy"
+
   - text: "Pickup crystal ball"
     dest: "current"
+    requires:
+      not: { has-item: "crystal_ball" }
     actions:
       - acquire-item: "crystal_ball"

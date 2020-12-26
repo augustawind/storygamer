@@ -55,6 +55,8 @@ pub struct Link {
     pub text: String,
     pub dest: LinkDest,
     #[serde(default)]
+    pub requires: Option<Condition>,
+    #[serde(default)]
     pub triggers: Vec<LinkTrigger>,
     #[serde(default)]
     pub actions: Vec<LinkAction>,

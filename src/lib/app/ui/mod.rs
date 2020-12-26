@@ -410,6 +410,7 @@ fn interpolate(content: &str, game: &Game) -> StyledString {
  * Event handling.
  */
 
+// TODO: factor out the view creation into a `link_select_view` function.
 fn on_continue(siv: &mut Cursive) {
     let current_page = match siv
         .with_user_data(|app: &mut AppState| {
@@ -451,7 +452,7 @@ fn on_continue(siv: &mut Cursive) {
 
     siv.with_user_data(|app: &mut AppState| {
         let game = app.game.as_mut().unwrap();
-        for (idx, link) in links.iter().enumerate() {
+        for (idx, link) in game.filter_active_links(links) {
             let mut sstr = StyledString::from("> ");
             sstr.append(interpolate(&link.text, &game));
             sstr.append_styled(format!("  ↪ ({}) ", link.dest), Effect::Italic);

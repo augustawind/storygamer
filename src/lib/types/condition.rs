@@ -8,7 +8,7 @@ use serde::Deserialize;
 use super::variable::Variable;
 
 #[derive(Deserialize, Debug, Clone)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "kebab-case")]
 pub enum Condition {
     And(Vec<Condition>),
     Or(Vec<Condition>),

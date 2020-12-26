@@ -3,8 +3,8 @@ use std::collections::{HashMap, VecDeque};
 use std::rc::{Rc, Weak};
 
 use crate::types::{
-    ComparisonOp, Condition, Item, ItemDef, LinkAction, LinkDest, LinkTrigger, Operation, Page,
-    Prompt, Variable,
+    ComparisonOp, Condition, Item, ItemDef, Link, LinkAction, LinkDest, LinkTrigger, Operation,
+    Page, Prompt, Variable,
 };
 use crate::utils::ConvertBounded;
 
@@ -40,6 +40,25 @@ impl Game {
                 .collect(),
             items: HashMap::new(),
         }
+    }
+
+    /// Filter the given `links`, excluding links whose `requires` condition is not met.
+    ///
+    /// The returned iterator yields `(i, link)` pairs, where `i` is the link's index in the
+    /// original `links` vector, such that "missing" indices correspond with links that were
+    /// filtered out.
+    pub fn filter_active_links<'a>(
+        &'a self,
+        links: &'a Vec<Link>,
+    ) -> impl Iterator<Item = (usize, &'a Link)> {
+        links.iter().enumerate().filter(move |(_, link)| {
+            if let Some(cond) = &link.requires {
+                if !self.eval_condition(&cond) {
+                    return false;
+                }
+            }
+            true
+        })
     }
 
     /// Advance the Game by selecting the Link with the given `link_idx`.
@@ -199,7 +218,7 @@ impl Game {
         None
     }
 
-    fn eval_condition(&mut self, cond: &Condition) -> bool {
+    fn eval_condition(&self, cond: &Condition) -> bool {
         match cond {
             Condition::And(children) => children.iter().all(|child| self.eval_condition(child)),
             Condition::Or(children) => children.iter().any(|child| self.eval_condition(child)),
@@ -209,7 +228,7 @@ impl Game {
         }
     }
 
-    fn eval_operation(&mut self, name: &String, op: ComparisonOp, value: &Variable) -> bool {
+    fn eval_operation(&self, name: &String, op: ComparisonOp, value: &Variable) -> bool {
         use ComparisonOp::*;
         use Variable::*;
         let var = &self.variables[name];
