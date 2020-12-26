@@ -4,7 +4,7 @@ use std::rc::Rc;
 use cursive::align::HAlign;
 use cursive::event::{Event, Key};
 use cursive::menu::MenuTree;
-use cursive::theme::{BaseColor, Color, Effect, Style};
+use cursive::theme::{BaseColor, Effect, Style};
 use cursive::traits::*;
 use cursive::utils::markup::{markdown, StyledString};
 use cursive::view::{scroll::Scroller, Margins, Scrollable};
@@ -211,7 +211,7 @@ fn redraw_content(siv: &mut Cursive) {
                                 );
                                 s.append(StyledString::styled(
                                     format!("  {}", fmt_uses),
-                                    Style::from(Color::Dark(BaseColor::Blue)).combine(Effect::Bold),
+                                    Style::from(BaseColor::Blue.dark()).combine(Effect::Bold),
                                 ));
                                 s
                             }),
@@ -237,7 +237,7 @@ fn redraw_content(siv: &mut Cursive) {
                                 let mut s = StyledString::plain(":: ");
                                 s.append(StyledString::styled(
                                     value.to_string(),
-                                    Style::from(Color::Dark(BaseColor::Blue)).combine(Effect::Bold),
+                                    Style::from(BaseColor::Blue.dark()).combine(Effect::Bold),
                                 ));
                                 s
                             }),
