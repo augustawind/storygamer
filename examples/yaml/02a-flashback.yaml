@@ -21,7 +21,7 @@ links:
   - text: "Wander onward"
     dest: { page: "02b-wander" }
     actions:
-      - { mod-num: { name: "momentum", value: 1 } }
+      - mod-num: { name: "momentum", value: 1 }
     triggers:
       - condition:
           and:
@@ -41,7 +41,7 @@ links:
         actions:
           - set-dest: { page: "02a-flashback" }
     actions:
-      - { set-var: { name: "momentum", value: 0 } }
+      - set-var: ["momentum", 0]
 
   - text: "Toggle drunkenness"
     dest: "current"
@@ -51,7 +51,7 @@ links:
   - text: "Reminisce again"
     dest: "current"
     actions:
-      - { mod-num: { name: "momentum", value: -1 } }
+      - mod-num: ["momentum", -1]
 
   - text: "Unleash the beast"
     dest: "current"
