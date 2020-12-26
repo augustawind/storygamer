@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use num_traits::{clamp, one, AsPrimitive, PrimInt};
+use num_traits::{clamp, AsPrimitive};
 
 macro_rules! item_for_each {
     (
@@ -30,10 +30,6 @@ pub fn shorten_path<P: AsRef<Path>>(path: P) -> PathBuf {
     dirs::home_dir()
         .and_then(|dir| path.strip_prefix(dir).ok().map(|p| Path::new("~").join(p)))
         .unwrap_or(path.to_path_buf())
-}
-
-pub fn ceil_div<I: PrimInt>(dividend: I, divisor: I) -> I {
-    (divisor + dividend - one()) / divisor
 }
 
 pub trait Bounded {
